@@ -18,3 +18,20 @@ Sim. Nas implementações TCP e UDP, o cliente envia mensagens de texto e o serv
 
 Em TCP, UDP e WebSocket, se o servidor mudar de máquina, o cliente continuará tentando se conectar/enviar mensagens para localhost ou para o endereço configurado anteriormente. Assim, a comunicação falharia e seria necessário alterar a configuração/endereço utilizado pelo cliente. Nas implementações apresentadas, isso significa alterar o código-fonte.
 Multicast é a exceção, o cliente não se conecta ao endereço físico do servidor, mas ao grupo lógico `230.0.0.1`. Se o novo servidor continuar enviando mensagens para o mesmo grupo e porta, o cliente continuará recebendo as mensagens sem nenhuma alteração em seu código-fonte.
+
+
+## Parte A
+
+### 1) Dentre os 8 tipos de transparência listados, qual você diria que é a mais visível para o programador que está usando um serviço remoto (e não construindo a infraestrutura por trás dele)? Justifique.
+
+A transparência de acesso é a mais visível para o programador que consome um serviço remoto. Isso ocorre porque ela afeta diretamente a forma como o código de integração é escrito no dia a dia, ocultando toda a complexidade de baixo nível da comunicação de rede (como manipulação de sockets, serialização de tipos de dados e tratamento de protocolos de transporte) sob a sintaxe familiar de uma chamada de função local. Assim, para o desenvolvedor da aplicação cliente, a facilidade de usar uma chamada de método limpa e uniforme representa o impacto prático mais imediato na integração de sistemas distribuídos.
+
+---
+
+### 2) Transparência total é sempre desejável? Dê um exemplo (pode ser hipotético) de uma situação em que esconder completamente que uma operação é remota atrapalharia mais do que ajudaria (dica: pense em desempenho ou em tratamento de falhas).
+
+Não, a transparência total nem sempre é desejável. Se uma chamada de rede for completamente mascarada como local, o desenvolvedor pode acidentalmente colocá-la dentro de um laço de repetição intenso, gerando um gargalo severo de latência que inviabilizaria o desempenho da aplicação. Além disso, operações remotas estão sujeitas a falhas parciais, perdas de pacotes e timeouts que exigem lógicas específicas de tratamento de erros, como políticas de novas tentativas (retries) ou fallbacks. Ocultar totalmente o aspecto distribuído impede que o programador enxergue esses riscos e implemente a resiliência adequada para mitigar falhas de rede.
+
+---
+
+
