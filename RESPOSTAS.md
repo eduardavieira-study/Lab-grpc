@@ -32,6 +32,11 @@ A transparência de acesso é a mais visível para o programador que consome um 
 
 Não, a transparência total nem sempre é desejável. Se uma chamada de rede for completamente mascarada como local, o desenvolvedor pode acidentalmente colocá-la dentro de um laço de repetição intenso, gerando um gargalo severo de latência que inviabilizaria o desempenho da aplicação. Além disso, operações remotas estão sujeitas a falhas parciais, perdas de pacotes e timeouts que exigem lógicas específicas de tratamento de erros, como políticas de novas tentativas (retries) ou fallbacks. Ocultar totalmente o aspecto distribuído impede que o programador enxergue esses riscos e implemente a resiliência adequada para mitigar falhas de rede.
 
+### 3) Comparando o cliente TCP do laboratório anterior com o cliente gRPC que você vai construir agora: qual dos dois exige que você “pense em rede” (sockets, send/receive, parsing de string) e qual permite que você “pense no problema” (chamar uma função e receber um resultado)? A que tipo de transparência isso se relaciona?
+
+O cliente TCP exige que o programador pense em rede, pois requer a manipulação direta de sockets, o gerenciamento manual do fluxo de envio/recebimento de bytes e o parsing textual das strings transmitidas. Por outro lado, o gRPC permite pensar diretamente no problema de negócio, já que a interação com o servidor ocorre por meio de stubs gerados automaticamente, nos quais o programador simplesmente chama um método comum e recebe o objeto de resposta estruturado. Essa diferença está diretamente relacionada à transparência de acesso, que oculta a representação de dados e a comunicação física subjacente, e também à transparência de localização, que mascara os endereços físicos de rede por trás de um canal de comunicação abstrato.
+
+
 ---
 
 ## Parte B
