@@ -74,3 +74,20 @@ No ClienteTCP do roteiro anterior, a montagem da mensagem era feita manualmente 
 
 Ao executar o cliente Python com o servidor desligado, a aplicação é interrompida lançando a exceção `grpc._channel._InactiveRpcError`. O comportamento observado detalha que a requisição RPC foi terminada com o status `StatusCode.UNAVAILABLE` e a mensagem de erro específica `"failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:50135: Failed to connect to remote host: Connection refused"`. Isso comprova que, sem o servidor ativo para receber e escutar a conexão na porta configurada (no caso, a porta 50135), o cliente gRPC não consegue estabelecer a sessão HTTP/2 subjacente e aborta imediatamente a operação remota.
 
+## Parte D
+
+### 1) No laboratório anterior, o Multicast usava um endereço de grupo (230.0.0.1) para alcançar vários clientes com um único envio; aqui, o streaming gRPC é um servidor conversando com um cliente por vez, só que ao longo de uma conexão só. Se você quisesse que vários clientes gRPC recebessem os mesmos avisos ao mesmo tempo, o que precisaria mudar na implementação do servidor?
+
+Para que múltiplos clientes gRPC recebam os mesmos avisos ao mesmo tempo, o servidor precisaria implementar um padrão de comunicação Publish-Subscribe (Pub/Sub) mantendo um registro ativo dos clientes conectados. Em vez de gerar e enviar os dados em um laço fechado e isolado para um único cliente, o servidor precisaria armazenar em uma lista concorrente compartilhada as referências dos canais de resposta ativos de cada requisição (como os objetos `StreamObserver` no Java). Dessa forma, sempre que um novo aviso fosse produzido no servidor, um despachante percorreria essa lista e enviaria a mensagem individualmente para a conexão gRPC ponto a ponto de cada cliente registrado, simulando o efeito de broadcast do multicast.
+
+---
+
+### 2) Compare o método de streaming em Java (StreamObserver, chamando onNext() repetidamente) com o de Python (uma função geradora usando yield). Os dois alcançam o mesmo resultado - qual das duas abordagens você achou mais natural de entender? Justifique.
+
+A abordagem em Python utilizando uma função geradora com `yield` é mais natural e intuitiva de entender. Isso ocorre porque o Python permite expressar o fluxo de dados sequencialmente através de estruturas de controle comuns, onde o desenvolvedor usa o laço de repetição usual e delega o envio incremental das mensagens ao comportamento nativo de geradores da linguagem. Em contrapartida, o modelo em Java utiliza callbacks reativos (`StreamObserver`) com métodos específicos como `onNext()`, `onError()` e `onCompleted()`, o que exige uma mentalidade de programação orientada a eventos mais verbosa e menos linear.
+
+---
+
+### 3) No método acompanharAvisos/AcompanharAvisos, o que aconteceria se o cliente fechasse a conexão (por exemplo, fechando o terminal) no meio do envio dos 5 avisos? Pesquise ou teste o comportamento e descreva o que observou.
+
+Se o cliente fechar a conexão abruptamente antes de receber todas as mensagens, o servidor gRPC detecta que o canal de comunicação foi encerrado e interrompe o processamento do streaming. Em Python, a execução do gerador é interrompida pelo framework gRPC e a verificação do contexto (`context.is_active()`) passa a retornar falso, impedindo o avanço do laço do servidor. Em Java, a próxima chamada ao método `observador.onNext()` no servidor falha e lança uma exceção do tipo `io.grpc.StatusRuntimeException` com o status `CANCELLED`, informando que o cliente cancelou o canal de comunicação e forçando a execução a desviar para a captura de erro.
