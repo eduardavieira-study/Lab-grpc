@@ -51,3 +51,21 @@ Isso sugere que em um sistema distribuído real é possível obter alta interope
 ### 3) Observe os arquivos gerados (target/generated-sources/.../CentralAtendimentoGrpc.java ou central_pb2_grpc.py). Sem entender todo o código gerado, você consegue identificar onde ficam definidas as operações ConsultarHorario e AcompanharAvisos? Cite o nome de pelo menos uma classe ou método gerado que você reconheceu.
 
 Sim, é possível identificar onde as operações estão mapeadas no código gerado. No arquivo Python `central_pb2_grpc.py`, as operações são explicitadas na classe `CentralAtendimentoStub` (para a chamada do cliente) e na classe base `CentralAtendimentoServicer`, que contém os métodos `ConsultarHorario` e `AcompanharAvisos` prontos para serem sobrescritos na implementação do servidor. Em Java, as operações são geradas como assinaturas de métodos como `consultarHorario` e `acompanharAvisos` dentro da classe abstrata `CentralAtendimentoImplBase` no arquivo `CentralAtendimentoGrpc.java`.
+
+## Parte C
+### 1) No cliente, a linha stub.consultarHorario(pergunta) (Java) ou stub.ConsultarHorario(...) (Python) parece uma chamada de método comum. Cite, em alto nível, pelo menos três coisas que acontecem “por baixo dos panos” entre essa chamada e o return da função no servidor.
+
+Por baixo dos panos, a chamada ao stub desencadeia uma série de mecanismos de rede e representação de dados gerenciados pelo framework. Primeiramente, ocorre a serialização, em que o stub converte o objeto de requisição da linguagem para um fluxo binário compacto definido pelo Protocol Buffers. Em seguida, o framework realiza a transmissão de rede, encapsulando essa mensagem binária em frames HTTP/2 e enviando-a pelo canal TCP estabelecido. Por fim, ao chegar no servidor gRPC, ocorre a desserialização dos bytes binários recebidos de volta em um objeto correspondente da linguagem local, que é então repassado como argumento à execução do método correspondente do servidor.
+
+---
+
+### 2) Compare esta implementação com o ClienteTCP do roteiro anterior. Onde estava, no TCP, o equivalente a “montar a mensagem” e “interpretar a resposta”? Quem faz esse trabalho agora, no gRPC?
+
+No ClienteTCP do roteiro anterior, a montagem da mensagem era feita manualmente pelo próprio programador concatenando strings, adicionando quebras de linha (`\n`) e convertendo o texto para bytes com `encode("utf-8")`. A interpretação da resposta também era manual, exigindo ler a linha crua recebida do socket com `readline()` e decodificá-la. Agora, no gRPC, todo esse fluxo repetitivo de formatação, codificação e decodificação de dados em rede é abstraído e executado de forma transparente pelas classes stubs geradas automaticamente pelo compilador do Protocol Buffers a partir do contrato `.proto`.
+
+---
+
+### 3) O que aconteceria se você chamasse stub.consultarHorario(pergunta) com o servidor desligado? Teste e descreva o comportamento observado (em qualquer uma das duas linguagens).
+
+Ao executar o cliente Python com o servidor desligado, a aplicação é interrompida lançando a exceção `grpc._channel._InactiveRpcError`. O comportamento observado detalha que a requisição RPC foi terminada com o status `StatusCode.UNAVAILABLE` e a mensagem de erro específica `"failed to connect to all addresses; last error: UNKNOWN: ipv4:127.0.0.1:50135: Failed to connect to remote host: Connection refused"`. Isso comprova que, sem o servidor ativo para receber e escutar a conexão na porta configurada (no caso, a porta 50135), o cliente gRPC não consegue estabelecer a sessão HTTP/2 subjacente e aborta imediatamente a operação remota.
+
