@@ -34,4 +34,20 @@ Não, a transparência total nem sempre é desejável. Se uma chamada de rede fo
 
 ---
 
+## Parte B
 
+### 1) No laboratório anterior, cada um de vocês definiu o formato das mensagens de forma implícita (comentários e convenção entre quem escreveu o cliente e o servidor). Aqui, o formato está no central.proto. Qual a vantagem de ter esse contrato explícito e gerado automaticamente em vez de combinado apenas “de boca”?
+
+A principal vantagem de possuir um contrato explícito no arquivo `.proto` é a garantia de consistência estrutural e a eliminação de erros humanos de integração. Em um acordo informal, qualquer desvio de caractere ou de tipo de dado quebra a comunicação e exige depuração manual complexa. Com o Protocol Buffers, o contrato é rígido e atua como uma especificação formal de tipos e campos, permitindo que o compilador gere automaticamente o código de serialização e desserialização robusto para ambos os lados, o que previne incompatibilidades durante o desenvolvimento de sistemas distribuídos.
+
+---
+
+### 2) O mesmo arquivo central.proto gerou código para Java e para Python. O que isso sugere sobre como equipes que usam linguagens diferentes podem se comunicar em um sistema distribuído real?
+
+Isso sugere que em um sistema distribuído real é possível obter alta interoperabilidade e independência tecnológica, permitindo que diferentes equipes de desenvolvimento escolham a linguagem de programação mais adequada para seus respectivos serviços (como Java para sistemas transacionais robustos e Python para ciência de dados). O uso de um contrato neutro comum, como o Protocol Buffers, garante que todas essas aplicações consigam conversar perfeitamente entre si na rede, delegando a tradução dos dados e a geração de stubs para as ferramentas automatizadas.
+
+---
+
+### 3) Observe os arquivos gerados (target/generated-sources/.../CentralAtendimentoGrpc.java ou central_pb2_grpc.py). Sem entender todo o código gerado, você consegue identificar onde ficam definidas as operações ConsultarHorario e AcompanharAvisos? Cite o nome de pelo menos uma classe ou método gerado que você reconheceu.
+
+Sim, é possível identificar onde as operações estão mapeadas no código gerado. No arquivo Python `central_pb2_grpc.py`, as operações são explicitadas na classe `CentralAtendimentoStub` (para a chamada do cliente) e na classe base `CentralAtendimentoServicer`, que contém os métodos `ConsultarHorario` e `AcompanharAvisos` prontos para serem sobrescritos na implementação do servidor. Em Java, as operações são geradas como assinaturas de métodos como `consultarHorario` e `acompanharAvisos` dentro da classe abstrata `CentralAtendimentoImplBase` no arquivo `CentralAtendimentoGrpc.java`.
